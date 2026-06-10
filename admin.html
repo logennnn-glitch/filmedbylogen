@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — filmedbylogen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400&family=Cormorant+Garamond:ital,wght@0,300;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0a; --bg2: #111; --surface: #161616; --surface2: #1e1e1e;
+      --border: rgba(255,255,255,0.08); --text: #e8e4dc; --muted: rgba(232,228,220,0.45);
+      --accent: #c9b99a; --danger: #e05555; --success: #6dbf8a;
+      --font: 'Geist Mono', monospace; --font-display: 'Cormorant Garamond', serif;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 13px; line-height: 1.6; min-height: 100vh; }
+
+    /* LOGIN */
+    #loginScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    .login-box { width: 100%; max-width: 360px; }
+    .login-logo { font-size: 11px; letter-spacing: 0.25em; color: var(--muted); margin-bottom: 40px; text-transform: lowercase; }
+    .login-title { font-family: var(--font-display); font-size: 32px; font-weight: 300; font-style: italic; color: var(--text); margin-bottom: 32px; }
+    .login-input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); font-family: var(--font); font-size: 13px; padding: 14px 16px; outline: none; letter-spacing: 0.1em; transition: border-color 0.2s; }
+    .login-input:focus { border-color: var(--accent); }
+    .login-btn { width: 100%; margin-top: 12px; background: var(--accent); color: var(--bg); font-family: var(--font); font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; padding: 14px; border: none; cursor: pointer; transition: opacity 0.2s; }
+    .login-btn:hover { opacity: 0.85; }
+    .login-error { color: var(--danger); font-size: 11px; letter-spacing: 0.1em; margin-top: 12px; display: none; }
+
+    /* ADMIN SHELL */
+    #adminShell { display: none; min-height: 100vh; }
+    .admin-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; border-bottom: 1px solid var(--border); background: var(--bg2); position: sticky; top: 0; z-index: 50; }
+    .admin-logo { font-size: 11px; letter-spacing: 0.2em; color: var(--muted); }
+    .admin-logo em { font-family: var(--font-display); font-style: italic; color: var(--accent); font-size: 13px; }
+    .admin-header-right { display: flex; align-items: center; gap: 16px; }
+    .btn-preview { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 8px 16px; border: 1px solid var(--border); transition: all 0.2s; }
+    .btn-preview:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .btn-logout { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); background: none; border: none; cursor: pointer; transition: color 0.2s; }
+    .btn-logout:hover { color: var(--danger); }
+
+    /* LAYOUT */
+    .admin-body { display: grid; grid-template-columns: 200px 1fr; min-height: calc(100vh - 61px); }
+    .admin-sidebar { border-right: 1px solid var(--border); padding: 24px 0; background: var(--bg2); }
+    .sidebar-nav { list-style: none; }
+    .sidebar-nav li a { display: block; padding: 10px 24px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: all 0.2s; border-left: 2px solid transparent; }
+    .sidebar-nav li a:hover { color: var(--text); }
+    .sidebar-nav li a.active { color: var(--accent); border-left-color: var(--accent); background: rgba(201,185,154,0.05); }
+    .admin-main { padding: 40px; overflow-y: auto; }
+
+    /* TABS */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .panel-title { font-family: var(--font-display); font-size: 28px; font-weight: 300; font-style: italic; color: var(--text); margin-bottom: 8px; }
+    .panel-desc { font-size: 11px; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 40px; }
+
+    /* CARDS */
+    .card { background: var(--surface); border: 1px solid var(--border); padding: 28px; margin-bottom: 20px; }
+    .card-title { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+
+    /* FORM ELEMENTS */
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    .field input, .field textarea, .field select {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font); font-size: 12px;
+      padding: 11px 14px; outline: none; transition: border-color 0.2s; resize: vertical;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+    .field select option { background: var(--bg2); }
+    .field textarea { min-height: 80px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* BUTTONS */
+    .btn { font-family: var(--font); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; padding: 11px 24px; border: none; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: var(--accent); color: var(--bg); }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-secondary { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-secondary:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid rgba(224,85,85,0.3); }
+    .btn-danger:hover { background: rgba(224,85,85,0.1); }
+    .btn-sm { padding: 7px 14px; font-size: 9px; }
+    .save-bar { display: flex; align-items: center; gap: 16px; margin-top: 8px; }
+    .save-status { font-size: 11px; letter-spacing: 0.1em; color: var(--success); display: none; }
+
+    /* PORTFOLIO GRID */
+    .portfolio-admin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .portfolio-admin-item { background: var(--surface); border: 1px solid var(--border); overflow: hidden; position: relative; }
+    .portfolio-admin-item-img { aspect-ratio: 4/3; background: var(--surface2); overflow: hidden; position: relative; }
+    .portfolio-admin-item-img img { width: 100%; height: 100%; object-fit: cover; }
+    .portfolio-admin-item-img .no-img { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 10px; letter-spacing: 0.2em; color: rgba(255,255,255,0.15); }
+    .portfolio-admin-item-body { padding: 14px; }
+    .portfolio-admin-item-body input, .portfolio-admin-item-body select {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); font-family: var(--font); font-size: 11px; padding: 8px 10px;
+      outline: none; margin-bottom: 8px;
+    }
+    .portfolio-admin-item-body input:focus, .portfolio-admin-item-body select:focus { border-color: var(--accent); }
+    .portfolio-admin-item-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .upload-overlay { position: absolute; inset: 0; background: rgba(13,13,13,0.75); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; cursor: pointer; }
+    .portfolio-admin-item-img:hover .upload-overlay { opacity: 1; }
+    .upload-overlay span { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text); }
+    .upload-input { display: none; }
+    .uploading-indicator { font-size: 10px; letter-spacing: 0.15em; color: var(--accent); display: none; margin-top: 6px; }
+
+    /* HERO UPLOAD */
+    .hero-upload-area { aspect-ratio: 16/5; background: var(--surface2); border: 1px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; transition: border-color 0.2s; margin-bottom: 20px; }
+    .hero-upload-area:hover { border-color: var(--accent); }
+    .hero-upload-area img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .hero-upload-area .upload-hint { position: relative; z-index: 1; text-align: center; background: rgba(10,10,10,0.7); padding: 16px 24px; }
+    .hero-upload-area .upload-hint p { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+    .hero-upload-area .upload-hint p.hint-main { font-family: var(--font-display); font-style: italic; font-size: 18px; letter-spacing: 0; color: var(--text); margin-bottom: 4px; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 32px; right: 32px; background: var(--surface2); border: 1px solid var(--border); padding: 14px 20px; font-size: 11px; letter-spacing: 0.1em; transform: translateY(20px); opacity: 0; transition: all 0.3s; z-index: 999; pointer-events: none; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: rgba(109,191,138,0.4); color: var(--success); }
+    .toast.error { border-color: rgba(224,85,85,0.4); color: var(--danger); }
+
+    /* ADD ITEM */
+    .btn-add { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; }
+
+    @media (max-width: 768px) {
+      .admin-body { grid-template-columns: 1fr; }
+      .admin-sidebar { display: none; }
+      .admin-main { padding: 24px 16px; }
+      .field-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <p class="login-logo">filmedbylogen / admin</p>
+    <h1 class="login-title">Welcome back.</h1>
+    <input class="login-input" type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password" />
+    <button class="login-btn" id="loginBtn">Enter</button>
+    <p class="login-error" id="loginError">Incorrect password. Try again.</p>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adminShell">
+  <header class="admin-header">
+    <div class="admin-logo">filmedbylogen / <em>admin</em></div>
+    <div class="admin-header-right">
+      <a class="btn-preview" href="/index.html" target="_blank">View Site ↗</a>
+      <button class="btn-logout" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <div class="admin-body">
+    <nav class="admin-sidebar">
+      <ul class="sidebar-nav">
+        <li><a href="#" class="active" data-tab="portfolio">Portfolio</a></li>
+        <li><a href="#" data-tab="hero">Hero</a></li>
+        <li><a href="#" data-tab="about">About</a></li>
+        <li><a href="#" data-tab="contact">Contact</a></li>
+        <li><a href="#" data-tab="footer">Footer</a></li>
+      </ul>
+    </nav>
+
+    <main class="admin-main">
+
+      <!-- PORTFOLIO TAB -->
+      <div class="tab-panel active" id="tab-portfolio">
+        <h2 class="panel-title">Portfolio</h2>
+        <p class="panel-desc">Click any photo to upload a new one. Edit titles and categories inline. Drag to reorder.</p>
+        <button class="btn btn-secondary btn-add" id="addItemBtn">+ Add new item</button>
+        <div class="portfolio-admin-grid" id="adminPortfolioGrid"></div>
+        <div class="save-bar">
+          <button class="btn btn-primary" id="savePortfolioBtn">Save Portfolio</button>
+          <span class="save-status" id="portfolioSaveStatus">Saved ✓</span>
+        </div>
+      </div>
+
+      <!-- HERO TAB -->
+      <div class="tab-panel" id="tab-hero">
+        <h2 class="panel-title">Hero</h2>
+        <p class="panel-desc">The fullscreen background and main headline.</p>
+        <div class="card">
+          <div class="card-title">Background Photo</div>
+          <div class="hero-upload-area" id="heroUploadArea">
+            <img id="heroPreview" src="" alt="" style="display:none;" />
+            <div class="upload-hint">
+              <p class="hint-main">Click to upload hero photo</p>
+              <p>Recommended: wide landscape, 2000px+</p>
+            </div>
+            <input type="file" id="heroFileInput" class="upload-input" accept="image/*" />
+          </div>
+          <p class="uploading-indicator" id="heroUploading">Uploading...</p>
+        </div>
+        <div class="card">
+          <div class="card-title">Text Content</div>
+          <div class="field"><label>Eyebrow text</label><input type="text" id="heroEyebrow" placeholder="Photography & Videography — Kuala Lumpur" /></div>
+          <div class="field-row">
+            <div class="field"><label>Main title</label><input type="text" id="heroTitle" placeholder="Stills that" /></div>
+            <div class="field"><label>Italic title</label><input type="text" id="heroTitleItalic" placeholder="hold time." /></div>
+          </div>
+          <div class="field"><label>Subtitle</label><input type="text" id="heroSub" placeholder="Pre-wedding · Couple · Portrait · Baby · Fashion" /></div>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-primary" id="saveHeroBtn">Save Hero</button>
+          <span class="save-status" id="heroSaveStatus">Saved ✓</span>
+        </div>
+      </div>
+
+      <!-- ABOUT TAB -->
+      <div class="tab-panel" id="tab-about">
+        <h2 class="panel-title">About</h2>
+        <p class="panel-desc">Your bio and the statement that introduces you.</p>
+        <div class="card">
+          <div class="card-title">Heading</div>
+          <div class="field-row">
+            <div class="field"><label>Main heading</label><input type="text" id="aboutHeading" placeholder="Quiet moments," /></div>
+            <div class="field"><label>Italic heading</label><input type="text" id="aboutHeadingItalic" placeholder="deliberate frames." /></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Bio</div>
+          <div class="field"><label>First paragraph</label><textarea id="aboutBio1"></textarea></div>
+          <div class="field"><label>Second paragraph</label><textarea id="aboutBio2"></textarea></div>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-primary" id="saveAboutBtn">Save About</button>
+          <span class="save-status" id="aboutSaveStatus">Saved ✓</span>
+        </div>
+      </div>
+
+      <!-- CONTACT TAB -->
+      <div class="tab-panel" id="tab-contact">
+        <h2 class="panel-title">Contact</h2>
+        <p class="panel-desc">The inquiry section heading and description text.</p>
+        <div class="card">
+          <div class="field-row">
+            <div class="field"><label>Heading</label><input type="text" id="contactHeading" placeholder="Let's make" /></div>
+            <div class="field"><label>Italic heading</label><input type="text" id="contactHeadingItalic" placeholder="something." /></div>
+          </div>
+          <div class="field"><label>Description</label><textarea id="contactDesc"></textarea></div>
+          <div class="field"><label>Formspree Form ID <span style="font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0;">(from formspree.io)</span></label><input type="text" id="formspreeId" placeholder="xyzabcde" /></div>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-primary" id="saveContactBtn">Save Contact</button>
+          <span class="save-status" id="contactSaveStatus">Saved ✓</span>
+        </div>
+      </div>
+
+      <!-- FOOTER TAB -->
+      <div class="tab-panel" id="tab-footer">
+        <h2 class="panel-title">Footer</h2>
+        <p class="panel-desc">Instagram link and display handle.</p>
+        <div class="card">
+          <div class="field"><label>Instagram URL</label><input type="url" id="footerInstagram" placeholder="https://instagram.com/filmedbylogen" /></div>
+          <div class="field"><label>Display handle</label><input type="text" id="footerHandle" placeholder="@filmedbylogen" /></div>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-primary" id="saveFooterBtn">Save Footer</button>
+          <span class="save-status" id="footerSaveStatus">Saved ✓</span>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API_BASE = window.location.origin;
+  let token = localStorage.getItem('fbl_token');
+  let siteContent = {};
+
+  // ── AUTH ──
+  async function checkToken() {
+    if (!token) return showLogin();
+    // Try loading content to verify token still works
+    try {
+      const res = await fetch(`${API_BASE}/api/content`);
+      if (res.ok) { siteContent = await res.json(); showAdmin(); populateAll(); }
+      else showLogin();
+    } catch { showAdmin(); } // Offline/local dev — show admin anyway
+  }
+
+  function showLogin() { document.getElementById('loginScreen').style.display = 'flex'; document.getElementById('adminShell').style.display = 'none'; }
+  function showAdmin() { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('adminShell').style.display = 'block'; }
+
+  document.getElementById('loginBtn').addEventListener('click', login);
+  document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
+  async function login() {
+    const pw = document.getElementById('loginPassword').value;
+    if (!pw) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/login`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        token = data.token;
+        localStorage.setItem('fbl_token', token);
+        const contentRes = await fetch(`${API_BASE}/api/content`);
+        if (contentRes.ok) { siteContent = await contentRes.json(); }
+        showAdmin();
+        populateAll();
+      } else {
+        document.getElementById('loginError').style.display = 'block';
+      }
+    } catch {
+      // Local dev fallback
+      token = 'local-dev';
+      localStorage.setItem('fbl_token', 'local-dev');
+      showAdmin();
+    }
+  }
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem('fbl_token');
+    token = null;
+    showLogin();
+  });
+
+  // ── TABS ──
+  document.querySelectorAll('.sidebar-nav a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.sidebar-nav a').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(x => x.classList.remove('active'));
+      a.classList.add('active');
+      document.getElementById('tab-' + a.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── POPULATE ──
+  function populateAll() {
+    const d = siteContent;
+    if (d.hero) {
+      document.getElementById('heroEyebrow').value = d.hero.eyebrow || '';
+      document.getElementById('heroTitle').value = d.hero.title || '';
+      document.getElementById('heroTitleItalic').value = d.hero.titleItalic || '';
+      document.getElementById('heroSub').value = d.hero.sub || '';
+      if (d.hero.bgImage) {
+        const img = document.getElementById('heroPreview');
+        img.src = d.hero.bgImage; img.style.display = 'block';
+      }
+    }
+    if (d.about) {
+      document.getElementById('aboutHeading').value = d.about.heading || '';
+      document.getElementById('aboutHeadingItalic').value = d.about.headingItalic || '';
+      document.getElementById('aboutBio1').value = d.about.bio1 || '';
+      document.getElementById('aboutBio2').value = d.about.bio2 || '';
+    }
+    if (d.contact) {
+      document.getElementById('contactHeading').value = d.contact.heading || '';
+      document.getElementById('contactHeadingItalic').value = d.contact.headingItalic || '';
+      document.getElementById('contactDesc').value = d.contact.desc || '';
+      document.getElementById('formspreeId').value = d.contact.formspreeId || '';
+    }
+    if (d.footer) {
+      document.getElementById('footerInstagram').value = d.footer.instagram || '';
+      document.getElementById('footerHandle').value = d.footer.handle || '';
+    }
+    if (d.portfolio) renderAdminPortfolio(d.portfolio);
+  }
+
+  // ── CLOUDINARY UPLOAD ──
+  async function uploadToCloudinary(file) {
+    // Get signed upload params from our API
+    const sigRes = await fetch(`${API_BASE}/api/upload-signature`, {
+      method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!sigRes.ok) throw new Error('Could not get upload signature');
+    const { signature, timestamp, folder, cloudName, apiKey } = await sigRes.json();
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('signature', signature);
+    formData.append('timestamp', timestamp);
+    formData.append('folder', folder);
+    formData.append('api_key', apiKey);
+
+    const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: 'POST', body: formData
+    });
+    if (!uploadRes.ok) throw new Error('Cloudinary upload failed');
+    const result = await uploadRes.json();
+    return { url: result.secure_url, cloudinaryId: result.public_id };
+  }
+
+  // ── HERO UPLOAD ──
+  document.getElementById('heroUploadArea').addEventListener('click', () => document.getElementById('heroFileInput').click());
+  document.getElementById('heroFileInput').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const indicator = document.getElementById('heroUploading');
+    indicator.style.display = 'block';
+    try {
+      const { url } = await uploadToCloudinary(file);
+      siteContent.hero = siteContent.hero || {};
+      siteContent.hero.bgImage = url;
+      const img = document.getElementById('heroPreview');
+      img.src = url; img.style.display = 'block';
+      showToast('Hero photo uploaded', 'success');
+    } catch(err) {
+      showToast('Upload failed: ' + err.message, 'error');
+    } finally { indicator.style.display = 'none'; }
+  });
+
+  // ── PORTFOLIO ──
+  let portfolioItems = [];
+
+  function renderAdminPortfolio(items) {
+    portfolioItems = JSON.parse(JSON.stringify(items));
+    const grid = document.getElementById('adminPortfolioGrid');
+    grid.innerHTML = '';
+    portfolioItems.forEach((item, idx) => {
+      const div = document.createElement('div');
+      div.className = 'portfolio-admin-item';
+      div.dataset.idx = idx;
+      div.innerHTML = `
+        <div class="portfolio-admin-item-img" id="imgArea-${idx}">
+          ${item.url ? `<img src="${item.url}" alt="" />` : `<div class="no-img">No photo yet</div>`}
+          <div class="upload-overlay"><span>Change Photo</span></div>
+          <input type="file" class="upload-input" id="fileInput-${idx}" accept="image/*" />
+        </div>
+        <p class="uploading-indicator" id="uploading-${idx}">Uploading...</p>
+        <div class="portfolio-admin-item-body">
+          <input type="text" placeholder="Title" value="${item.title || ''}" data-field="title" data-idx="${idx}" />
+          <select data-field="category" data-idx="${idx}">
+            <option value="pre-wedding" ${item.category==='pre-wedding'?'selected':''}>Pre-Wedding</option>
+            <option value="couple" ${item.category==='couple'?'selected':''}>Couple</option>
+            <option value="portrait" ${item.category==='portrait'?'selected':''}>Portrait</option>
+            <option value="baby" ${item.category==='baby'?'selected':''}>Baby</option>
+            <option value="fashion" ${item.category==='fashion'?'selected':''}>Fashion</option>
+          </select>
+          <div class="portfolio-admin-item-actions">
+            <button class="btn btn-danger btn-sm" data-action="delete" data-idx="${idx}">Remove</button>
+          </div>
+        </div>`;
+      grid.appendChild(div);
+
+      // Upload click
+      div.querySelector('.upload-overlay').addEventListener('click', () => div.querySelector(`#fileInput-${idx}`).click());
+      div.querySelector(`#fileInput-${idx}`).addEventListener('change', async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const indicator = div.querySelector(`#uploading-${idx}`);
+        indicator.style.display = 'block';
+        try {
+          const { url, cloudinaryId } = await uploadToCloudinary(file);
+          portfolioItems[idx].url = url;
+          portfolioItems[idx].cloudinaryId = cloudinaryId;
+          const imgArea = div.querySelector(`#imgArea-${idx}`);
+          imgArea.innerHTML = `<img src="${url}" alt="" /><div class="upload-overlay"><span>Change Photo</span></div><input type="file" class="upload-input" id="fileInput-${idx}" accept="image/*" />`;
+          imgArea.querySelector('.upload-overlay').addEventListener('click', () => div.querySelector(`#fileInput-${idx}`).click());
+          showToast('Photo uploaded', 'success');
+        } catch(err) {
+          showToast('Upload failed: ' + err.message, 'error');
+        } finally { indicator.style.display = 'none'; }
+      });
+
+      // Inline field changes
+      div.querySelectorAll('[data-field]').forEach(el => {
+        el.addEventListener('input', () => { portfolioItems[el.dataset.idx][el.dataset.field] = el.value; });
+        el.addEventListener('change', () => { portfolioItems[el.dataset.idx][el.dataset.field] = el.value; });
+      });
+
+      // Delete
+      div.querySelector('[data-action="delete"]').addEventListener('click', () => {
+        portfolioItems.splice(idx, 1);
+        renderAdminPortfolio(portfolioItems);
+      });
+    });
+  }
+
+  document.getElementById('addItemBtn').addEventListener('click', () => {
+    portfolioItems.push({ id: Date.now(), category: 'portrait', title: 'New Session', url: '', cloudinaryId: '' });
+    renderAdminPortfolio(portfolioItems);
+    showToast('New item added — upload a photo and set the title', 'success');
+  });
+
+  // ── SAVE FUNCTIONS ──
+  async function saveContent(patch, statusId) {
+    siteContent = { ...siteContent, ...patch };
+    try {
+      const res = await fetch(`${API_BASE}/api/content`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(siteContent)
+      });
+      if (res.ok) { showSaved(statusId); showToast('Saved successfully', 'success'); }
+      else showToast('Save failed', 'error');
+    } catch { showToast('Could not reach server', 'error'); }
+  }
+
+  function showSaved(id) {
+    const el = document.getElementById(id);
+    el.style.display = 'inline';
+    setTimeout(() => el.style.display = 'none', 3000);
+  }
+
+  document.getElementById('savePortfolioBtn').addEventListener('click', () => saveContent({ portfolio: portfolioItems }, 'portfolioSaveStatus'));
+  document.getElementById('saveHeroBtn').addEventListener('click', () => saveContent({
+    hero: {
+      eyebrow: document.getElementById('heroEyebrow').value,
+      title: document.getElementById('heroTitle').value,
+      titleItalic: document.getElementById('heroTitleItalic').value,
+      sub: document.getElementById('heroSub').value,
+      bgImage: siteContent.hero?.bgImage || ''
+    }
+  }, 'heroSaveStatus'));
+  document.getElementById('saveAboutBtn').addEventListener('click', () => saveContent({
+    about: {
+      heading: document.getElementById('aboutHeading').value,
+      headingItalic: document.getElementById('aboutHeadingItalic').value,
+      bio1: document.getElementById('aboutBio1').value,
+      bio2: document.getElementById('aboutBio2').value
+    }
+  }, 'aboutSaveStatus'));
+  document.getElementById('saveContactBtn').addEventListener('click', () => saveContent({
+    contact: {
+      heading: document.getElementById('contactHeading').value,
+      headingItalic: document.getElementById('contactHeadingItalic').value,
+      desc: document.getElementById('contactDesc').value,
+      formspreeId: document.getElementById('formspreeId').value
+    }
+  }, 'contactSaveStatus'));
+  document.getElementById('saveFooterBtn').addEventListener('click', () => saveContent({
+    footer: {
+      instagram: document.getElementById('footerInstagram').value,
+      handle: document.getElementById('footerHandle').value
+    }
+  }, 'footerSaveStatus'));
+
+  // ── TOAST ──
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.className = 'toast', 3000);
+  }
+
+  // ── INIT ──
+  checkToken();
+</script>
+</body>
+</html>

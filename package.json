@@ -1,0 +1,9 @@
+{
+  "name": "filmedbylogen",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0",
+    "cloudinary": "^1.41.0"
+  }
+}

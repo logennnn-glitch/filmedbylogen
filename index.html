@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>filmedbylogen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Geist+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --bg2: #111111;
+      --surface: #181818;
+      --border: rgba(255,255,255,0.07);
+      --text: #e8e4dc;
+      --muted: rgba(232,228,220,0.4);
+      --accent: #c9b99a;
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-mono: 'Geist Mono', 'Courier New', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
+      font-weight: 300;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 48px;
+      mix-blend-mode: normal;
+      transition: background 0.4s;
+    }
+    nav.scrolled {
+      background: rgba(13,13,13,0.92);
+      backdrop-filter: blur(12px);
+      padding: 18px 48px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 300;
+      letter-spacing: 0.18em;
+      color: var(--text);
+      text-decoration: none;
+      text-transform: lowercase;
+    }
+    .nav-links {
+      display: flex;
+      gap: 36px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    /* ── HERO ── */
+    #hero {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 48px 64px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to top, rgba(13,13,13,0.85) 0%, rgba(13,13,13,0.2) 50%, rgba(13,13,13,0.4) 100%);
+      z-index: 1;
+    }
+    /* Placeholder gradient that looks cinematic until real photo is added */
+    .hero-image-placeholder {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #1a1510 0%, #0d0d0d 40%, #141c1a 100%);
+      z-index: 0;
+    }
+    .hero-image-placeholder::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 60% 40%, rgba(180,150,100,0.08) 0%, transparent 65%);
+    }
+    /* When you have a real photo, replace the placeholder with:
+       <img class="hero-img" src="your-photo.jpg" alt="" />
+       and add .hero-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+    */
+    .hero-content {
+      position: relative;
+      z-index: 2;
+    }
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+    .hero-title {
+      font-size: clamp(52px, 8vw, 112px);
+      font-weight: 300;
+      line-height: 0.95;
+      letter-spacing: -0.01em;
+      margin-bottom: 28px;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .hero-sub {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      max-width: 340px;
+    }
+    .hero-scroll {
+      position: absolute;
+      bottom: 64px;
+      right: 48px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .hero-scroll-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, var(--muted), transparent);
+      animation: scrollPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.4; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(0.6); }
+    }
+
+    /* ── SECTIONS SHARED ── */
+    section { padding: 120px 48px; }
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 48px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 0 0 40px;
+      height: 1px;
+      background: var(--accent);
+      opacity: 0.4;
+    }
+
+    /* ── ABOUT ── */
+    #about {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+      border-top: 1px solid var(--border);
+    }
+    .about-left {}
+    .about-heading {
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 300;
+      line-height: 1.15;
+      margin-bottom: 32px;
+    }
+    .about-heading em { font-style: italic; color: var(--accent); }
+    .about-body {
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.8;
+      max-width: 440px;
+    }
+    .about-body p + p { margin-top: 16px; }
+    .about-right {
+      padding-top: 80px;
+    }
+    .about-services {
+      list-style: none;
+      border-top: 1px solid var(--border);
+    }
+    .about-services li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+      letter-spacing: 0.03em;
+    }
+    .about-services li span {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+    }
+
+    /* ── PORTFOLIO ── */
+    #portfolio {
+      border-top: 1px solid var(--border);
+    }
+    .portfolio-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 64px;
+    }
+    .portfolio-heading {
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 300;
+      line-height: 1.1;
+    }
+    .portfolio-heading em { font-style: italic; color: var(--accent); }
+
+    /* Filter tabs */
+    .filter-tabs {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+    .filter-btn {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+
+    /* Grid */
+    .portfolio-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+    }
+    .portfolio-item {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .portfolio-item:nth-child(1) { grid-column: span 7; grid-row: span 1; }
+    .portfolio-item:nth-child(2) { grid-column: span 5; grid-row: span 1; }
+    .portfolio-item:nth-child(3) { grid-column: span 4; }
+    .portfolio-item:nth-child(4) { grid-column: span 4; }
+    .portfolio-item:nth-child(5) { grid-column: span 4; }
+    .portfolio-item:nth-child(6) { grid-column: span 5; }
+    .portfolio-item:nth-child(7) { grid-column: span 7; }
+
+    .portfolio-item-inner {
+      aspect-ratio: 3/2;
+      background: var(--surface);
+      overflow: hidden;
+      position: relative;
+    }
+    .portfolio-item:nth-child(1) .portfolio-item-inner,
+    .portfolio-item:nth-child(2) .portfolio-item-inner { aspect-ratio: 4/3; }
+
+    /* Photo placeholder */
+    .photo-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .portfolio-item:hover .photo-placeholder { transform: scale(1.04); }
+
+    /* Each category gets a subtle tonal gradient */
+    .ph-prewedding { background: linear-gradient(135deg, #1c1510 0%, #221a12 100%); }
+    .ph-couple { background: linear-gradient(135deg, #101318 0%, #141c22 100%); }
+    .ph-portrait { background: linear-gradient(135deg, #131310 0%, #1c1c14 100%); }
+    .ph-baby { background: linear-gradient(135deg, #121518 0%, #181d20 100%); }
+    .ph-fashion { background: linear-gradient(135deg, #0f0f14 0%, #161620 100%); }
+
+    .placeholder-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.12);
+      text-align: center;
+    }
+    .placeholder-label strong {
+      display: block;
+      font-size: 11px;
+      color: rgba(255,255,255,0.18);
+      margin-bottom: 4px;
+    }
+
+    /* Hover overlay */
+    .portfolio-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(13,13,13,0.7);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 24px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .portfolio-item:hover .portfolio-overlay { opacity: 1; }
+    .overlay-category {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .overlay-title {
+      font-size: 20px;
+      font-weight: 300;
+      font-style: italic;
+    }
+
+    /* real images when added */
+    .portfolio-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .portfolio-item:hover img { transform: scale(1.04); }
+
+    /* ── LIGHTBOX ── */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      background: rgba(10,10,10,0.97);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .lightbox.open { opacity: 1; pointer-events: all; }
+    .lightbox-close {
+      position: absolute;
+      top: 32px; right: 40px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+      transition: color 0.2s;
+    }
+    .lightbox-close:hover { color: var(--text); }
+    .lightbox-inner {
+      max-width: 80vw;
+      max-height: 80vh;
+      text-align: center;
+    }
+    .lightbox-inner img {
+      max-width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+    }
+    .lightbox-caption {
+      margin-top: 20px;
+      font-style: italic;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    /* ── CONTACT ── */
+    #contact {
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+    .contact-left {}
+    .contact-heading {
+      font-size: clamp(36px, 4vw, 56px);
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 24px;
+    }
+    .contact-heading em { font-style: italic; color: var(--accent); }
+    .contact-desc {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.8;
+      max-width: 380px;
+    }
+    .contact-right {}
+    .form-group {
+      margin-bottom: 24px;
+    }
+    .form-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: block;
+      margin-bottom: 10px;
+    }
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--font-display);
+      font-size: 15px;
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color 0.2s;
+      appearance: none;
+    }
+    .form-select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(232,228,220,0.4)' stroke-width='1.5'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 40px;
+    }
+    .form-select option { background: var(--bg2); }
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: var(--accent);
+    }
+    .form-textarea { resize: vertical; min-height: 120px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-submit {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      padding: 16px 40px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 8px;
+    }
+    .form-submit:hover { opacity: 0.85; }
+    .form-success {
+      display: none;
+      font-style: italic;
+      color: var(--accent);
+      font-size: 16px;
+      margin-top: 16px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-logo {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+    }
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: rgba(232,228,220,0.2);
+    }
+    .footer-ig a {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-ig a:hover { color: var(--accent); }
+
+    /* ── SCROLL REVEAL ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
+      nav { padding: 24px 24px; }
+      nav.scrolled { padding: 16px 24px; }
+      .nav-links { gap: 20px; }
+      section { padding: 80px 24px; }
+      #hero { padding: 0 24px 48px; }
+      .hero-scroll { right: 24px; }
+      #about { grid-template-columns: 1fr; gap: 48px; }
+      .about-right { padding-top: 0; }
+      .portfolio-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .portfolio-item:nth-child(n) { grid-column: span 1; }
+      .portfolio-item:nth-child(1) { grid-column: span 2; }
+      #contact { grid-template-columns: 1fr; gap: 48px; }
+      .form-row { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 16px; text-align: center; }
+      .portfolio-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav id="nav">
+    <a class="nav-logo" href="#">filmedbylogen</a>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#portfolio">Work</a></li>
+      <li><a href="#contact">Inquire</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-image-placeholder"></div>
+    <div class="hero-bg"></div>
+    <!-- Replace the placeholder above with your best photo:
+         <img class="hero-img" src="your-best-photo.jpg" alt="filmedbylogen" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;" />
+    -->
+    <div class="hero-content">
+      <p class="hero-eyebrow">Photography &amp; Videography — Kuala Lumpur</p>
+      <h1 class="hero-title">
+        Stills that<br/>
+        <em>hold time.</em>
+      </h1>
+      <p class="hero-sub">Pre-wedding · Couple · Portrait · Baby · Fashion</p>
+    </div>
+    <div class="hero-scroll">
+      <span>Scroll</span>
+      <div class="hero-scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="about-left reveal">
+      <div class="section-label">About</div>
+      <h2 class="about-heading">
+        Quiet moments,<br/><em>deliberate frames.</em>
+      </h2>
+      <div class="about-body">
+        <p>I'm Logen — a photographer and filmmaker based in Malaysia. I work in the space between candid and composed, where the image feels lived-in rather than performed.</p>
+        <p>Every project I take on is flexible, unhurried, and personal. No live events — just sessions we can shape together, on our own time.</p>
+      </div>
+    </div>
+    <div class="about-right reveal">
+      <div class="section-label">Services</div>
+      <ul class="about-services">
+        <li>Pre-wedding <span>Session</span></li>
+        <li>Couple <span>Session</span></li>
+        <li>Portrait <span>Session</span></li>
+        <li>Baby &amp; Family <span>Session</span></li>
+        <li>Fashion <span>Editorial</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PORTFOLIO -->
+  <section id="portfolio">
+    <div class="portfolio-header reveal">
+      <div>
+        <div class="section-label">Selected Work</div>
+        <h2 class="portfolio-heading">
+          The<br/><em>portfolio.</em>
+        </h2>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-tabs reveal">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="pre-wedding">Pre-Wedding</button>
+      <button class="filter-btn" data-filter="couple">Couple</button>
+      <button class="filter-btn" data-filter="portrait">Portrait</button>
+      <button class="filter-btn" data-filter="baby">Baby</button>
+      <button class="filter-btn" data-filter="fashion">Fashion</button>
+    </div>
+
+    <!-- Grid -->
+    <!-- To add your photos: replace the <div class="photo-placeholder ..."> inside each
+         .portfolio-item-inner with:
+         <img src="your-photo.jpg" alt="description" />
+         The overlay and hover effects will work automatically. -->
+    <div class="portfolio-grid" id="portfolioGrid">
+
+      <div class="portfolio-item" data-category="pre-wedding" data-title="Forest Session" data-lightbox="">
+        <div class="portfolio-item-inner">
+          <div class="photo-placeholder ph-prewedding">
+            <div class="placeholder-label"><strong>Pre-Wedding</strong>Add photo here</div>
+          </div>
+          <div class="portfolio-overlay">
+            <p class="overlay-category">Pre-Wedding</p>
+            <p class="overlay-title">Forest Session</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="portfolio-item" data-category="couple" data-title="Golden Hour" data-lightbox="">
+        <div class="portfolio-item-inner">
+          <div class="photo-placeholder ph-couple">
+            <div class="placeholder-label"><strong>Couple</strong>Add photo here</div>
+          </div>
+          <div class="portfolio-overlay">
+            <p class="overlay-category">Couple</p>
+            <p class="overlay-title">Golden Hour</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="portfolio-item" data-category="portrait" data-title="Studio Portrait" data-lightbox="">
+        <div class="portfolio-item-inner">
+          <div class="photo-placeholder ph-portrait">
+            <div class="placeholder-label"><strong>Portrait</strong>Add photo here</div>
+          </div>
+          <div class="portfolio-overlay">
+            <p class="overlay-category">Portrait</p>
+            <p class="overlay-title">Studio Portrait</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="portfolio-item" data-category="baby" data-title="Newborn Session" data-lightbox="">
+        <div class="portfolio-item-inner">
+          <div class="photo-placeholder ph-baby">
+            <div class="placeholder-label"><strong>Baby</strong>Add photo here</div>
+          </div>
+          <div class="portfolio-overlay">
+            <p class="overlay-category">Baby</p>
+            <p class="overlay-title">Newborn Session</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="portfolio-item" data-category="fashion" data-title="Editorial" data-lightbox="">
+        <div class="portfolio-item-inner">
+          <div class="photo-placeholder ph-fashion">
+            <div class="placeholder-label"><strong>Fashion</strong>Add photo here</div>
+          </div>
+          <div class="portfolio-overlay">
+            <p class="overlay-category">Fashion</p>
+            <p class="overlay-title">Editorial</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="portfolio-item" data-category="pre-wedding" data-title="Rooftop Dusk" data-lightbox="">
+        <div class="portfolio-item-inner">
+          <div class="photo-placeholder ph-prewedding">
+            <div class="placeholder-label"><strong>Pre-Wedding</strong>Add photo here</div>
+          </div>
+          <div class="portfolio-overlay">
+            <p class="overlay-category">Pre-Wedding</p>
+            <p class="overlay-title">Rooftop Dusk</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="portfolio-item" data-category="portrait" data-title="Natural Light" data-lightbox="">
+        <div class="portfolio-item-inner">
+          <div class="photo-placeholder ph-portrait">
+            <div class="placeholder-label"><strong>Portrait</strong>Add photo here</div>
+          </div>
+          <div class="portfolio-overlay">
+            <p class="overlay-category">Portrait</p>
+            <p class="overlay-title">Natural Light</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="contact-left reveal">
+      <div class="section-label">Inquire</div>
+      <h2 class="contact-heading">
+        Let's make<br/><em>something.</em>
+      </h2>
+      <p class="contact-desc">All sessions are flexible — no locked dates until we agree on a plan. Tell me what you have in mind and I'll get back to you within 48 hours.</p>
+    </div>
+    <div class="contact-right reveal">
+      <form id="contactForm" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <!-- Replace YOUR_FORM_ID with your Formspree ID at formspree.io (free) -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="name">Name</label>
+            <input class="form-input" type="text" id="name" name="name" required placeholder="Your name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-input" type="email" id="email" name="email" required placeholder="your@email.com" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="session">Session type</label>
+          <select class="form-select" id="session" name="session">
+            <option value="">Select a session type</option>
+            <option>Pre-Wedding</option>
+            <option>Couple</option>
+            <option>Portrait</option>
+            <option>Baby &amp; Family</option>
+            <option>Fashion / Editorial</option>
+            <option>Other / Not sure yet</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="message">Tell me about your vision</label>
+          <textarea class="form-textarea" id="message" name="message" placeholder="Location ideas, mood, anything you have in mind..."></textarea>
+        </div>
+        <button class="form-submit" type="submit">Send Inquiry</button>
+        <p class="form-success" id="formSuccess">Thank you — I'll be in touch soon.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span class="footer-logo">filmedbylogen</span>
+    <span class="footer-copy">© 2026 Logen. All rights reserved.</span>
+    <span class="footer-ig"><a href="https://instagram.com/filmedbylogen" target="_blank">@filmedbylogen</a></span>
+  </footer>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" id="lightboxClose">Close ✕</button>
+    <div class="lightbox-inner">
+      <img id="lightboxImg" src="" alt="" />
+      <p class="lightbox-caption" id="lightboxCaption"></p>
+    </div>
+  </div>
+
+  <script>
+    // Nav scroll
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 60);
+    });
+
+    // Scroll reveal
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+    }, { threshold: 0.1 });
+    reveals.forEach(el => observer.observe(el));
+
+    // Portfolio filter
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const portfolioItems = document.querySelectorAll('.portfolio-item');
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const filter = btn.dataset.filter;
+        portfolioItems.forEach(item => {
+          const match = filter === 'all' || item.dataset.category === filter;
+          item.style.display = match ? '' : 'none';
+        });
+      });
+    });
+
+    // Lightbox — works when you add real <img> tags inside portfolio items
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightboxImg');
+    const lightboxCaption = document.getElementById('lightboxCaption');
+    portfolioItems.forEach(item => {
+      item.addEventListener('click', () => {
+        const img = item.querySelector('img');
+        if (!img) return; // no image yet, skip
+        lightboxImg.src = img.src;
+        lightboxCaption.textContent = item.dataset.title || '';
+        lightbox.classList.add('open');
+      });
+    });
+    document.getElementById('lightboxClose').addEventListener('click', () => lightbox.classList.remove('open'));
+    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.remove('open'); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') lightbox.classList.remove('open'); });
+
+    // Contact form (works with Formspree, or swap for any backend)
+    const form = document.getElementById('contactForm');
+    const successMsg = document.getElementById('formSuccess');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      try {
+        const res = await fetch(form.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } });
+        if (res.ok) {
+          form.reset();
+          successMsg.style.display = 'block';
+        }
+      } catch {
+        // fallback: just show success for demo
+        successMsg.style.display = 'block';
+      }
+    });
+  </script>
+
+</body>
+</html>
